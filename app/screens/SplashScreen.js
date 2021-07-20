@@ -1,5 +1,5 @@
 import React from 'react'
-import {View, Text, Image, StyleSheet} from 'react-native'
+import {View, Text, Image, StyleSheet, StatusBar} from 'react-native'
 import {StackActions} from '@react-navigation/native'
 import {
   heightPercentageToDP as hp,
@@ -7,11 +7,11 @@ import {
 } from 'react-native-responsive-screen'
 
 export default SplashScreen = props => {
-  // React.useEffect(() => {
-  //   setTimeout(() => {
-  //     props.navigation.dispatch(StackActions.replace('Main'))
-  //   }, 3000)
-  // })
+  React.useEffect(() => {
+    setTimeout(() => {
+      props.navigation.dispatch(StackActions.replace('Main'))
+    }, 3000)
+  })
 
   return (
     <View
@@ -19,6 +19,7 @@ export default SplashScreen = props => {
         flex: 1,
         backgroundColor: 'white',
       }}>
+      <StatusBar barStyle="dark-content" backgroundColor="white" />
       <View
         style={{flex: 1, justifyContent: 'flex-start', alignItems: 'center'}}>
         <Image
