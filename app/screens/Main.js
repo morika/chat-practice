@@ -26,7 +26,10 @@ export default Main = () => {
   const [newMessage, setNewMessage] = useState('')
   const [selectedMessageIndex, setSelectedMessageIndex] = useState(-1)
   const [isLoading, setIsLoading] = useState(true)
+  const [isEditMode, setIsEditMode] = useState(false)
   const flatListRef = useRef()
+  const messageRefs = useRef([])
+  const inputRef = useRef()
 
   React.useEffect(() => {
     getChat()
@@ -47,7 +50,6 @@ export default Main = () => {
   }
 
   const chatBody = () => {
-    const messageRefs = []
     return (
       <FlatList
         ref={flatListRef}
@@ -55,7 +57,7 @@ export default Main = () => {
         keyExtractor={(item, index) => index.toString()}
         renderItem={({item, index}) => (
           <MessageContainer
-            ref={ref => messageRefs.push(ref)}
+            ref={ref => messageRefs.current.push(ref)}
             message={item.message}
             onSelect={() => setSelectedMessageIndex(index)}
           />
@@ -64,44 +66,64 @@ export default Main = () => {
     )
   }
 
-  const sendNewMessage = () => {
-    if (newMessage !== '') {
-      const model = {message: newMessage, time: Date.now()}
-      messageList.push(model)
-      flatListRef.current.scrollToEnd()
-
-      chatService
-        .sendNewMessage(model)
-        .then()
-        .catch(err => console.log('[1935] ' + err))
-
-      setNewMessage('')
+  const enterKey = () => {
+    if (isEditMode) {
+      editMessage()
+    } else {
+      sendMessage()
     }
+    setIsEditMode(false)
+  }
+
+  const sendMessage = () => {
+    const model = {message: newMessage, time: Date.now()}
+
+    chatService
+      .sendNewMessage(model)
+      .then(data => {
+        console.log(data)
+        model.id = data.id
+        messageList.push(model)
+      })
+      .catch(err => console.log('[1935] ' + err))
+
+    flatListRef.current.scrollToEnd()
+    setNewMessage('')
   }
 
   const deleteMessage = () => {
-    if (selectedMessageIndex > -1) {
-      messageRefs[selectedMessageIndex].deselect()
-      //messageRefs.current.splice[(selectedMessageIndex, 1)]
-      messageList.splice(selectedMessageIndex, 1)
-      setSelectedMessageIndex(-1)
-    }
+    messageRefs.current[selectedMessageIndex].deselect()
+    messageRefs.current.splice(selectedMessageIndex, 1)
+
+    chatService
+      .deleteMessage(messageList[selectedMessageIndex].id)
+      .then()
+      .catch(err => console.log('[2142] ' + err))
+
+    messageList.splice(selectedMessageIndex, 1)
+    setSelectedMessageIndex(-1)
   }
 
   const editMessage = () => {
-    if (selectedMessageIndex > -1) {
-      messageRefs.current[selectedMessageIndex].edit(newMessage)
-      setNewMessage('')
-      setSelectedMessageIndex(-1)
-    }
+    let list = messageList
+    list[selectedMessageIndex].message = newMessage
+    setMessageList(list)
+    messageRefs.current[selectedMessageIndex].deselect()
+    chatService.editMessage(messageList[selectedMessageIndex].id, newMessage)
+    setNewMessage('')
+    setSelectedMessageIndex(-1)
+  }
+
+  const editMessageButton = () => {
+    setNewMessage(messageList[selectedMessageIndex].message)
+    setIsEditMode(true)
+    inputRef.current.focus()
   }
 
   const copyMessage = () => {
-    if (selectedMessageIndex > -1) {
-      ToastAndroid.show('Text copied to clipboard', ToastAndroid.LONG)
-      messageRefs.current[selectedMessageIndex].deselect()
-      setSelectedMessageIndex(-1)
-    }
+    ToastAndroid.show('Text copied to clipboard', ToastAndroid.LONG)
+    messageRefs.current[selectedMessageIndex].deselect()
+    setSelectedMessageIndex(-1)
   }
 
   return (
@@ -154,7 +176,7 @@ export default Main = () => {
             <TouchableHighlight
               style={styles.button}
               underlayColor="#29A9EB"
-              onPress={editMessage}>
+              onPress={editMessageButton}>
               <Icon name="edit" color="white" size={wp(6)} />
             </TouchableHighlight>
             <TouchableHighlight
@@ -185,6 +207,7 @@ export default Main = () => {
         }}>
         <TextInput
           placeholder="Message"
+          ref={inputRef}
           style={{flex: 1, fontSize: wp(4)}}
           value={newMessage}
           onChangeText={text => setNewMessage(text)}
@@ -192,7 +215,7 @@ export default Main = () => {
         <TouchableHighlight
           underlayColor="silver"
           style={[styles.button, {marginHorizontal: 0}]}
-          onPress={sendNewMessage}>
+          onPress={enterKey}>
           <Icon name="paper-plane" color="gray" size={wp(6)} />
         </TouchableHighlight>
       </View>

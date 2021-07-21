@@ -7,21 +7,54 @@ export default {
         .collection('messages')
         .orderBy('time')
         .get()
-      resolve(snapshot.docs.map(doc => doc.data()))
+        .then(snapshot => {
+          const model = []
+          snapshot.docs.forEach(item => {
+            model.push({
+              message: item.data().message,
+              time: item.data().time,
+              id: item.id,
+            })
+          })
+          resolve(model)
+        })
+        .catch(err => reject(err))
     })
   },
 
   sendNewMessage(model) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       firestore()
         .collection('messages')
         .add(model)
-        .then(() => {
-          resolve()
+        .then(doc => {
+          resolve(doc)
         })
         .catch(err => {
           reject(err)
         })
+    })
+  },
+
+  deleteMessage(id) {
+    return new Promise((resolve, reject) => {
+      firestore()
+        .collection('messages')
+        .doc(id)
+        .delete()
+        .then(() => resolve())
+        .catch(err => reject(err))
+    })
+  },
+
+  editMessage(id, message) {
+    return new Promise((resolve, reject) => {
+      firestore()
+        .collection('messages')
+        .doc(id)
+        .update({ message: message })
+        .then(() => resolve())
+        .catch(err => reject(err))
     })
   },
 }
