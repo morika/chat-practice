@@ -10,6 +10,7 @@ import {
   ImageBackground,
   FlatList,
   ToastAndroid,
+  ActivityIndicator,
 } from 'react-native'
 import {
   heightPercentageToDP as hp,
@@ -17,32 +18,36 @@ import {
 } from 'react-native-responsive-screen'
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import {MessageContainer} from '../components'
+import {chatService} from '../services'
 // import Theme from './app/scripts/theme'
 
 export default Main = () => {
-  const [messageList, setMessageList] = useState([
-    'Hi',
-    'How are you?',
-    'Im Fine',
-    'dsfsd dsfadsfadsf adsf ',
-    'dsafads fads fadsfa sf asdf as dfadsf asdf asdf asdf asdf as',
-    'sdfdsfadsfasd dsfadsfdsaf sadfadsf asfa asdfasfsf asdfasf',
-    'jkhfalh ahfalhfalf ahflahfhfkahflaf afhskafhaskfhakf halfh laf has',
-    'dsfsd dsfadsfadsf adsf ',
-    'dsafads fads fadsfa sf asdf as dfadsf asdf asdf asdf asdf as',
-    'sdfdsfadsfasd dsfadsfdsaf sadfadsf asfa asdfasfsf asdfasf',
-    'jkhfalh ahfalhfalf ahflahfhfkahflaf afhskafhaskfhakf halfh laf has',
-    'dsfsd dsfadsfadsf adsf ',
-    'dsafads fads fadsfa sf asdf as dfadsf asdf asdf asdf asdf as',
-    'sdfdsfadsfasd dsfadsfdsaf sadfadsf asfa asdfasfsf asdfasf',
-    'jkhfalh ahfalhfalf ahflahfhfkahflaf afhskafhaskfhakf halfh laf has',
-  ])
+  const [messageList, setMessageList] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [selectedMessageIndex, setSelectedMessageIndex] = useState(-1)
+  const [isLoading, setIsLoading] = useState(true)
   const flatListRef = useRef()
-  const messageRefs = useRef([])
+
+  React.useEffect(() => {
+    getChat()
+  }, [])
+
+  const getChat = async () => {
+    setIsLoading(true)
+    chatService
+      .getMessages()
+      .then(data => {
+        setIsLoading(false)
+        setMessageList(data)
+      })
+      .catch(err => {
+        setIsLoading(false)
+        console.log(err)
+      })
+  }
 
   const chatBody = () => {
+    const messageRefs = []
     return (
       <FlatList
         ref={flatListRef}
@@ -50,8 +55,8 @@ export default Main = () => {
         keyExtractor={(item, index) => index.toString()}
         renderItem={({item, index}) => (
           <MessageContainer
-            ref={ref => messageRefs.current.push(ref)}
-            message={item}
+            ref={ref => messageRefs.push(ref)}
+            message={item.message}
             onSelect={() => setSelectedMessageIndex(index)}
           />
         )}
@@ -61,16 +66,23 @@ export default Main = () => {
 
   const sendNewMessage = () => {
     if (newMessage !== '') {
-      messageList.push(newMessage)
-      setNewMessage('')
+      const model = {message: newMessage, time: Date.now()}
+      messageList.push(model)
       flatListRef.current.scrollToEnd()
+
+      chatService
+        .sendNewMessage(model)
+        .then()
+        .catch(err => console.log('[1935] ' + err))
+
+      setNewMessage('')
     }
   }
 
   const deleteMessage = () => {
     if (selectedMessageIndex > -1) {
-      messageRefs.current[selectedMessageIndex].deselect()
-      messageRefs.current.splice[(selectedMessageIndex, 1)]
+      messageRefs[selectedMessageIndex].deselect()
+      //messageRefs.current.splice[(selectedMessageIndex, 1)]
       messageList.splice(selectedMessageIndex, 1)
       setSelectedMessageIndex(-1)
     }
@@ -157,8 +169,12 @@ export default Main = () => {
       <View style={{flex: 1}}>
         <ImageBackground
           source={require('../assets/images/background.png')}
-          style={{flex: 1}}>
-          {chatBody()}
+          style={{flex: 1, justifyContent: 'center'}}>
+          {isLoading ? (
+            <ActivityIndicator color="blue" size={wp(10)} />
+          ) : (
+            chatBody()
+          )}
         </ImageBackground>
       </View>
       <View
