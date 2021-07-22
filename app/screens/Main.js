@@ -28,6 +28,7 @@ export default Main = () => {
   const [selectedMessageId, setSelectedMessageId] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [getMessages, setGetMessages] = useState(true)
   const flatListRef = useRef()
   const messageRefs = useRef([])
   const inputRef = useRef()
@@ -36,15 +37,24 @@ export default Main = () => {
     getChat()
   }, [])
 
-  const getChat = async () => {
+  const messageRef = ref => {
+    if (ref) {
+      getMessages
+        ? messageRefs.current.push(ref)
+        : (messageRefs.current[messagesList.length - 1] = ref)
+    }
+  }
+
+  const getChat = () => {
     setIsLoading(true)
     chatService
       .getMessages()
       .then(data => {
         data.map(item => {
           setMessagesList(old => [...old, createMessageBox(item.data(), false)])
-        }),
-          setIsLoading(false)
+        })
+        setGetMessages(false)
+        setIsLoading(false)
       })
       .catch(err => {
         setIsLoading(false)
@@ -55,11 +65,7 @@ export default Main = () => {
   const createMessageBox = (message, isSending = true) => {
     return (
       <MessageContainer
-        ref={ref => {
-          if (ref) {
-            messageRefs.current[messagesList.length - 1] = ref
-          }
-        }}
+        ref={messageRef}
         key={message.id}
         data={message}
         isSending={isSending}
