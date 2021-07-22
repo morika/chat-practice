@@ -26,7 +26,7 @@ import {v4 as uuidv4} from 'uuid'
 export default Main = () => {
   const [messagesList, setMessagesList] = useState([])
   const [newMessage, setNewMessage] = useState('')
-  const [selectedMessageId, setSelectedMessageId] = useState('')
+  const [selectedMessageId, setSelectedMessageId] = useState('we')
   const [isLoading, setIsLoading] = useState(true)
   const [isEditMode, setIsEditMode] = useState(false)
   const flatListRef = useRef()
@@ -42,14 +42,15 @@ export default Main = () => {
     chatService
       .getMessages()
       .then(data => {
-        const array = []
         Promise.all(
           data.map(item => {
-            array.push(createMessageBox(item.data(), false))
+            setMessagesList(old => [
+              ...old,
+              createMessageBox(item.data(), false),
+            ])
           }),
         )
           .then(() => {
-            setMessagesList(array)
             setIsLoading(false)
           })
           .catch(err => console.log('[0231] ' + err))
@@ -63,7 +64,11 @@ export default Main = () => {
   const createMessageBox = (message, isSending = true) => {
     return (
       <MessageContainer
-        ref={ref => messageRefs.current.push(ref)}
+        ref={ref => {
+          if (ref) {
+            messageRefs.current[messagesList.length - 1] = ref
+          }
+        }}
         key={message.id}
         data={message}
         isSending={isSending}
@@ -92,7 +97,7 @@ export default Main = () => {
     setIsEditMode(false)
   }
 
-  const sendMessage = async () => {
+  const sendMessage = () => {
     if (newMessage !== '') {
       const id = uuidv4()
       const model = {
@@ -143,7 +148,6 @@ export default Main = () => {
       .deleteMessage(selectedMessageId)
       .then()
       .catch(err => console.log('[2142] ' + err))
-
     setSelectedMessageId('')
   }
 
@@ -171,9 +175,11 @@ export default Main = () => {
   }
 
   const copyMessage = () => {
-    ToastAndroid.show('Text copied to clipboard', ToastAndroid.LONG)
-    messageRefs.current[findSelectedMessageIndex()].deselect()
-    setSelectedMessageId('')
+    // ToastAndroid.show('Text copied to clipboard', ToastAndroid.LONG)
+    // messageRefs.current[findSelectedMessageIndex()].deselect()
+    // setSelectedMessageId('')
+    console.log('messagesList lengh: ' + messagesList.length)
+    console.log('messageRefs length: ' + messageRefs.current.length)
   }
 
   return (
@@ -257,7 +263,7 @@ export default Main = () => {
         }}>
         <TextInput
           placeholder="Message"
-          placeholderTextColor='gray'
+          placeholderTextColor="gray"
           ref={inputRef}
           style={{flex: 1, fontSize: wp(4), color: 'gray'}}
           value={newMessage}
@@ -276,7 +282,6 @@ export default Main = () => {
 
 const styles = StyleSheet.create({
   button: {
-    marginHorizontal: wp(1),
     width: wp(12),
     height: wp(12),
     borderRadius: wp(10),
