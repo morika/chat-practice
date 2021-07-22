@@ -8,7 +8,6 @@ import Icon from 'react-native-vector-icons/FontAwesome'
 
 export default MessageContainer = React.forwardRef((props, ref) => {
   const [background, setBacground] = useState('transparent')
-  const [message, setMessage] = useState(props.data.message)
   const [isSending, setIsSending] = useState(props.isSending)
 
   const select = () => {
@@ -42,7 +41,7 @@ export default MessageContainer = React.forwardRef((props, ref) => {
         backgroundColor: background,
       }}>
       <View style={{flexDirection: 'row'}}>
-        <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{alignItems: 'center', justifyContent: 'center'}}>
           {isSending ? (
             <ActivityIndicator color="blie" size={wp(5)} />
           ) : (
@@ -61,8 +60,26 @@ export default MessageContainer = React.forwardRef((props, ref) => {
             marginLeft: wp(2),
           }}>
           <View>
-            <Text style={{fontSize: wp(4.5), color: 'white'}}>{message}</Text>
-            <Text style={{textAlign: 'right', color: '#d8d8d8'}}>11:00 AM</Text>
+            <Text style={{flex: 1, fontSize: wp(4.5), color: 'white'}}>
+              {props.data.message}
+            </Text>
+            <View style={{flexDirection: 'row'}}>
+              <Text
+                style={{textAlign: 'right', color: '#d8d8d8', fontSize: wp(3)}}>
+                11:00 AM
+              </Text>
+              {props.data.isEdited ? (
+                <Text
+                  style={{
+                    textAlign: 'right',
+                    color: '#d8d8d8',
+                    marginLeft: wp(2),
+                    fontSize: wp(3),
+                  }}>
+                  edited
+                </Text>
+              ) : null}
+            </View>
           </View>
         </TouchableHighlight>
       </View>

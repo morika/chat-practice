@@ -28,7 +28,6 @@ import {v4 as uuidv4} from 'uuid'
 export default Main = () => {
   const [messagesList, setMessagesList] = useState([])
   const [newMessage, setNewMessage] = useState('')
-  const [selectedMessageIndex, setSelectedMessageIndex] = useState(-1)
   const [selectedMessageId, setSelectedMessageId] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isEditMode, setIsEditMode] = useState(false)
@@ -81,9 +80,7 @@ export default Main = () => {
         ref={flatListRef}
         data={messagesList}
         keyExtractor={(item, index) => index.toString()}
-        renderItem={({item, index}) =>
-          item
-        }
+        renderItem={({item, index}) => item}
       />
     )
   }
@@ -97,51 +94,84 @@ export default Main = () => {
     setIsEditMode(false)
   }
 
-  const sendMessage = () => {
-    const id = uuidv4()
-    const model = {id: id, message: newMessage, time: Date.now()}
-    const node = createMessageBox(model)
-    const list = messagesList
-    list.push(node)
-    setMessagesList(list)
-    const refIndex = messageRefs.current.length
+  const sendMessage = async () => {
+    if (newMessage !== '') {
+      const id = uuidv4()
+      const model = {
+        id: id,
+        message: newMessage,
+        time: Date.now(),
+        isEdited: false,
+      }
+      const node = createMessageBox(model)
+      pushNodeInList(node)
+        .then(index => {
+          chatService
+            .sendNewMessage(model)
+            .then(() => {
+              messageRefs.current[index].sent()
+            })
+            .catch(err => console.log('[1935] ' + err))
 
-    chatService
-      .sendNewMessage(model)
-      .then(() => {
-        messageRefs.current[refIndex].sent()
-      })
-      .catch(err => console.log('[1935] ' + err))
+          flatListRef.current.scrollToEnd()
+          setNewMessage('')
+        })
+        .catch(err => console.log('[1411] ' + err))
+    }
+  }
 
-    flatListRef.current.scrollToEnd()
-    setNewMessage('')
+  const pushNodeInList = async node => {
+    return new Promise((resolve, reject) => {
+      const list = messagesList
+      const length = list.push(node)
+      setMessagesList(list)
+      resolve(length - 1)
+    }).catch(err => reject(err))
+  }
+
+  const findSelectedMessageIndex = () => {
+    let res = -1
+    messagesList.forEach((item, index) => {
+      if (item.props.data.id === selectedMessageId) {
+        res = index
+      }
+    })
+
+    return res
   }
 
   const deleteMessage = () => {
-    messageRefs.current[selectedMessageIndex].deselect()
-    messageRefs.current.splice(selectedMessageIndex, 1)
+    const index = findSelectedMessageIndex()
+    messageRefs.current.splice(index, 1)
+    messagesList.splice(index, 1)
 
     chatService
-      .deleteMessage(messageList[selectedMessageIndex].id)
+      .deleteMessage(selectedMessageId)
       .then()
       .catch(err => console.log('[2142] ' + err))
 
-    messageList.splice(selectedMessageIndex, 1)
-    setSelectedMessageIndex(-1)
+    setSelectedMessageId('')
   }
 
   const editMessage = () => {
-    let list = messageList
-    list[selectedMessageIndex].message = newMessage
-    setMessageList(list)
-    messageRefs.current[selectedMessageIndex].deselect()
-    chatService.editMessage(messageList[selectedMessageIndex].id, newMessage)
-    setNewMessage('')
-    setSelectedMessageIndex(-1)
+    if (newMessage !== '') {
+      let list = messagesList
+      const index = findSelectedMessageIndex()
+      list[index].props.data.message = newMessage
+      list[index].props.data.isEdited = true
+      setMessagesList(list)
+      messageRefs.current[index].deselect()
+      chatService
+        .editMessage(selectedMessageId, newMessage)
+        .then()
+        .catch(err => console.log('[1355] ' + err))
+      setNewMessage('')
+      setSelectedMessageId('')
+    }
   }
 
   const editMessageButton = () => {
-    setNewMessage(messageList[selectedMessageIndex].message)
+    setNewMessage(messagesList[findSelectedMessageIndex()].props.data.message)
     setIsEditMode(true)
     inputRef.current.focus()
   }
@@ -149,7 +179,7 @@ export default Main = () => {
   const copyMessage = () => {
     ToastAndroid.show('Text copied to clipboard', ToastAndroid.LONG)
     messageRefs.current[selectedMessageIndex].deselect()
-    setSelectedMessageIndex(-1)
+    setSelectedMessageId('')
   }
 
   return (
@@ -187,7 +217,7 @@ export default Main = () => {
             </Text>
           </View>
         </View>
-        {selectedMessageIndex > -1 ? (
+        {selectedMessageId !== '' ? (
           <View
             style={{
               flexDirection: 'row',

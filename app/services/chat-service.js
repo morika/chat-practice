@@ -40,7 +40,7 @@ export default {
       firestore()
         .collection('messages')
         .doc(id)
-        .update({message: message})
+        .update({message: message, isEdited: true})
         .then(() => resolve())
         .catch(err => reject(err))
     })
