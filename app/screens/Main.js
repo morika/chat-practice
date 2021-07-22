@@ -11,7 +11,6 @@ import {
   FlatList,
   ToastAndroid,
   ActivityIndicator,
-  ScrollView,
 } from 'react-native'
 import {
   heightPercentageToDP as hp,
@@ -26,7 +25,7 @@ import {v4 as uuidv4} from 'uuid'
 export default Main = () => {
   const [messagesList, setMessagesList] = useState([])
   const [newMessage, setNewMessage] = useState('')
-  const [selectedMessageId, setSelectedMessageId] = useState('we')
+  const [selectedMessageId, setSelectedMessageId] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isEditMode, setIsEditMode] = useState(false)
   const flatListRef = useRef()
@@ -42,18 +41,10 @@ export default Main = () => {
     chatService
       .getMessages()
       .then(data => {
-        Promise.all(
-          data.map(item => {
-            setMessagesList(old => [
-              ...old,
-              createMessageBox(item.data(), false),
-            ])
-          }),
-        )
-          .then(() => {
-            setIsLoading(false)
-          })
-          .catch(err => console.log('[0231] ' + err))
+        data.map(item => {
+          setMessagesList(old => [...old, createMessageBox(item.data(), false)])
+        }),
+          setIsLoading(false)
       })
       .catch(err => {
         setIsLoading(false)
@@ -175,11 +166,9 @@ export default Main = () => {
   }
 
   const copyMessage = () => {
-    // ToastAndroid.show('Text copied to clipboard', ToastAndroid.LONG)
-    // messageRefs.current[findSelectedMessageIndex()].deselect()
-    // setSelectedMessageId('')
-    console.log('messagesList lengh: ' + messagesList.length)
-    console.log('messageRefs length: ' + messageRefs.current.length)
+    ToastAndroid.show('Text copied to clipboard', ToastAndroid.LONG)
+    messageRefs.current[findSelectedMessageIndex()].deselect()
+    setSelectedMessageId('')
   }
 
   return (
