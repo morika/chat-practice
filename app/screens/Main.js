@@ -141,8 +141,8 @@ export default Main = () => {
 
   const deleteMessage = () => {
     const index = findSelectedMessageIndex()
-    messageRefs.current.splice(index, 1)
-    messagesList.splice(index, 1)
+    messageRefs.current[index] = null
+    messagesList[index] = null
 
     chatService
       .deleteMessage(selectedMessageId)
