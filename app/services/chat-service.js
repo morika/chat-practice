@@ -2,21 +2,13 @@ import firestore from '@react-native-firebase/firestore'
 
 export default {
   getMessages() {
-    return new Promise(async (resolve, reject) => {
-      const snapshot = await firestore()
+    return new Promise((resolve, reject) => {
+      firestore()
         .collection('messages')
         .orderBy('time')
         .get()
         .then(snapshot => {
-          const model = []
-          snapshot.docs.forEach(item => {
-            model.push({
-              message: item.data().message,
-              time: item.data().time,
-              id: item.id,
-            })
-          })
-          resolve(model)
+          resolve(snapshot.docs)
         })
         .catch(err => reject(err))
     })
@@ -24,15 +16,11 @@ export default {
 
   sendNewMessage(model) {
     return new Promise(async (resolve, reject) => {
-      firestore()
+      const res = await firestore()
         .collection('messages')
-        .add(model)
-        .then(doc => {
-          resolve(doc)
-        })
-        .catch(err => {
-          reject(err)
-        })
+        .doc(model.id)
+        .set(model)
+      resolve()
     })
   },
 
@@ -52,7 +40,7 @@ export default {
       firestore()
         .collection('messages')
         .doc(id)
-        .update({ message: message })
+        .update({message: message})
         .then(() => resolve())
         .catch(err => reject(err))
     })

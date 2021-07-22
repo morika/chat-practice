@@ -11,6 +11,7 @@ import {
   FlatList,
   ToastAndroid,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native'
 import {
   heightPercentageToDP as hp,
@@ -19,12 +20,16 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome5'
 import {MessageContainer} from '../components'
 import {chatService} from '../services'
+import 'react-native-get-random-values'
+import {v4 as uuidv4} from 'uuid'
+
 // import Theme from './app/scripts/theme'
 
 export default Main = () => {
-  const [messageList, setMessageList] = useState([])
+  const [messagesList, setMessagesList] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [selectedMessageIndex, setSelectedMessageIndex] = useState(-1)
+  const [selectedMessageId, setSelectedMessageId] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isEditMode, setIsEditMode] = useState(false)
   const flatListRef = useRef()
@@ -40,8 +45,17 @@ export default Main = () => {
     chatService
       .getMessages()
       .then(data => {
-        setIsLoading(false)
-        setMessageList(data)
+        const array = []
+        Promise.all(
+          data.map(item => {
+            array.push(createMessageBox(item.data(), false))
+          }),
+        )
+          .then(() => {
+            setMessagesList(array)
+            setIsLoading(false)
+          })
+          .catch(err => console.log('[0231] ' + err))
       })
       .catch(err => {
         setIsLoading(false)
@@ -49,19 +63,27 @@ export default Main = () => {
       })
   }
 
+  const createMessageBox = (message, isSending = true) => {
+    return (
+      <MessageContainer
+        ref={ref => messageRefs.current.push(ref)}
+        key={message.id}
+        data={message}
+        isSending={isSending}
+        onSelect={() => setSelectedMessageId(message.id)}
+      />
+    )
+  }
+
   const chatBody = () => {
     return (
       <FlatList
         ref={flatListRef}
-        data={messageList}
+        data={messagesList}
         keyExtractor={(item, index) => index.toString()}
-        renderItem={({item, index}) => (
-          <MessageContainer
-            ref={ref => messageRefs.current.push(ref)}
-            message={item.message}
-            onSelect={() => setSelectedMessageIndex(index)}
-          />
-        )}
+        renderItem={({item, index}) =>
+          item
+        }
       />
     )
   }
@@ -76,14 +98,18 @@ export default Main = () => {
   }
 
   const sendMessage = () => {
-    const model = {message: newMessage, time: Date.now()}
+    const id = uuidv4()
+    const model = {id: id, message: newMessage, time: Date.now()}
+    const node = createMessageBox(model)
+    const list = messagesList
+    list.push(node)
+    setMessagesList(list)
+    const refIndex = messageRefs.current.length
 
     chatService
       .sendNewMessage(model)
-      .then(data => {
-        console.log(data)
-        model.id = data.id
-        messageList.push(model)
+      .then(() => {
+        messageRefs.current[refIndex].sent()
       })
       .catch(err => console.log('[1935] ' + err))
 
