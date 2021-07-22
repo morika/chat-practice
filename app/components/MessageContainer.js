@@ -11,7 +11,7 @@ export default MessageContainer = React.forwardRef((props, ref) => {
   const [isSending, setIsSending] = useState(props.isSending)
 
   const select = () => {
-    setBacground('red')
+    setBacground('rgba(2,153,0, 0.5)')
     props.onSelect()
   }
 
@@ -43,17 +43,17 @@ export default MessageContainer = React.forwardRef((props, ref) => {
       <View style={{flexDirection: 'row'}}>
         <View style={{alignItems: 'center', justifyContent: 'center'}}>
           {isSending ? (
-            <ActivityIndicator color="blie" size={wp(5)} />
+            <ActivityIndicator color="#00c3ff" size={wp(5)} />
           ) : (
             <Icon name="check" color="green" size={wp(5)} />
           )}
         </View>
         <TouchableHighlight
-          underlayColor="green"
+          underlayColor="#18b716"
           onLongPress={select}
           style={{
             maxWidth: wp(60),
-            backgroundColor: 'green',
+            backgroundColor: '#18b716',
             paddingHorizontal: wp(2),
             paddingVertical: hp(0.3),
             borderRadius: wp(1),

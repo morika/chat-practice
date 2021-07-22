@@ -23,8 +23,6 @@ import {chatService} from '../services'
 import 'react-native-get-random-values'
 import {v4 as uuidv4} from 'uuid'
 
-// import Theme from './app/scripts/theme'
-
 export default Main = () => {
   const [messagesList, setMessagesList] = useState([])
   const [newMessage, setNewMessage] = useState('')
@@ -104,29 +102,25 @@ export default Main = () => {
         isEdited: false,
       }
       const node = createMessageBox(model)
-      pushNodeInList(node)
-        .then(index => {
-          chatService
-            .sendNewMessage(model)
-            .then(() => {
-              messageRefs.current[index].sent()
-            })
-            .catch(err => console.log('[1935] ' + err))
+      const index = pushNodeInList(node)
 
-          flatListRef.current.scrollToEnd()
-          setNewMessage('')
+      chatService
+        .sendNewMessage(model)
+        .then(() => {
+          messageRefs.current[index].sent()
         })
-        .catch(err => console.log('[1411] ' + err))
+        .catch(err => console.log('[1935] ' + err))
+
+      flatListRef.current.scrollToEnd()
+      setNewMessage('')
     }
   }
 
-  const pushNodeInList = async node => {
-    return new Promise((resolve, reject) => {
-      const list = messagesList
-      const length = list.push(node)
-      setMessagesList(list)
-      resolve(length - 1)
-    }).catch(err => reject(err))
+  const pushNodeInList = node => {
+    const list = messagesList
+    const length = list.push(node)
+    setMessagesList(list)
+    return length - 1
   }
 
   const findSelectedMessageIndex = () => {
@@ -178,7 +172,7 @@ export default Main = () => {
 
   const copyMessage = () => {
     ToastAndroid.show('Text copied to clipboard', ToastAndroid.LONG)
-    messageRefs.current[selectedMessageIndex].deselect()
+    messageRefs.current[findSelectedMessageIndex()].deselect()
     setSelectedMessageId('')
   }
 
@@ -249,7 +243,7 @@ export default Main = () => {
           source={require('../assets/images/background.png')}
           style={{flex: 1, justifyContent: 'center'}}>
           {isLoading ? (
-            <ActivityIndicator color="blue" size={wp(10)} />
+            <ActivityIndicator color="#00c3ff" size={wp(10)} />
           ) : (
             chatBody()
           )}
@@ -263,8 +257,9 @@ export default Main = () => {
         }}>
         <TextInput
           placeholder="Message"
+          placeholderTextColor='gray'
           ref={inputRef}
-          style={{flex: 1, fontSize: wp(4)}}
+          style={{flex: 1, fontSize: wp(4), color: 'gray'}}
           value={newMessage}
           onChangeText={text => setNewMessage(text)}
         />
