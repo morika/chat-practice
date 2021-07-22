@@ -46,7 +46,7 @@ export default Main = () => {
   }
 
   const getChat = () => {
-    setIsLoading(true)
+    clearData()
     chatService
       .getMessages()
       .then(data => {
@@ -60,6 +60,13 @@ export default Main = () => {
         setIsLoading(false)
         console.log(err)
       })
+  }
+
+  const clearData = () => {
+    setIsLoading(true)
+    setMessagesList([])
+    messageRefs.current = []
+    setSelectedMessageId('')
   }
 
   const createMessageBox = (message, isSending = true) => {
@@ -79,6 +86,9 @@ export default Main = () => {
       <FlatList
         ref={flatListRef}
         data={messagesList}
+        refreshing={isLoading}
+        onRefresh={getChat}
+        keyboardShouldPersistTaps="always"
         keyExtractor={(item, index) => index.toString()}
         renderItem={({item, index}) => item}
       />

@@ -11,7 +11,7 @@ export default function App() {
   return (
     <AppState>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Main" headerMode="none">
+        <Stack.Navigator initialRouteName="Splash" headerMode="none">
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Main" component={MainScreen} />
         </Stack.Navigator>
